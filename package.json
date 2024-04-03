@@ -29,7 +29,9 @@
     "howler": "^2.2.4",
     "pako": "^2.1.0",
     "pixi-filters": "^6.0.0",
-    "pixi.js": "~8.0.4"
+    "pixi.js": "~8.0.4",
+	"@pixi/gif": "^3.0.0",
+	"clientjs": "^0.2.1"
   },
   "devDependencies": {
     "@rollup/plugin-typescript": "^11.1.6",
