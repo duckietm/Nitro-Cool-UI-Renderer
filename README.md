@@ -1,4 +1,4 @@
-# Nitro React v2.1
+# Nitro React v2.2.0
 
 ## Prerequisites
 
