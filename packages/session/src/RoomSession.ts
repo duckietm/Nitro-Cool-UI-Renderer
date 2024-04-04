@@ -69,14 +69,14 @@ export class RoomSession implements IRoomSession
         this._roomId = roomId;
     }
 
-    public sendChatMessage(text: string, styleId: number): void
+    public sendChatMessage(text: string, styleId: number, chatColour: string): void
     {
-        GetCommunication().connection.send(new RoomUnitChatComposer(text, styleId));
+        GetCommunication().connection.send(new RoomUnitChatComposer(text, styleId, chatColour));
     }
 
-    public sendShoutMessage(text: string, styleId: number): void
+    public sendShoutMessage(text: string, styleId: number, chatColour: string): void
     {
-        GetCommunication().connection.send(new RoomUnitChatShoutComposer(text, styleId));
+        GetCommunication().connection.send(new RoomUnitChatShoutComposer(text, styleId, chatColour));
     }
 
     public sendWhisperMessage(recipientName: string, text: string, styleId: number): void
@@ -125,6 +125,11 @@ export class RoomSession implements IRoomSession
     public sendAmbassadorAlertMessage(userId: number): void
     {
         GetCommunication().connection.send(new RoomAmbassadorAlertComposer(userId));
+    }
+	
+	public sendWhisperGroupMessage(userId: number): void
+    {
+        GetCommunication().connection.send(new ChatWhisperGroupComposer(userId));
     }
 
     public sendKickMessage(userId: number): void

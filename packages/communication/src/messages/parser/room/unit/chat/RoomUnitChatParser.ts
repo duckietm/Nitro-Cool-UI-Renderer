@@ -7,6 +7,7 @@ export class RoomUnitChatParser implements IMessageParser
     private _gesture: number;
     private _bubble: number;
     private _urls: string[];
+	private _chatColours: string;
     private _messageLength: number;
 
     public flush(): boolean
@@ -16,6 +17,7 @@ export class RoomUnitChatParser implements IMessageParser
         this._gesture = 0;
         this._bubble = 0;
         this._urls = [];
+		this._chatColours = null;
         this._messageLength = 0;
 
         return true;
@@ -31,7 +33,8 @@ export class RoomUnitChatParser implements IMessageParser
         this._bubble = wrapper.readInt();
 
         this.parseUrls(wrapper);
-
+		
+		this._chatColours = wrapper.readString();
         this._messageLength = wrapper.readInt();
 
         return true;
@@ -78,6 +81,11 @@ export class RoomUnitChatParser implements IMessageParser
     public get urls(): string[]
     {
         return this._urls;
+    }
+	
+	public get chatColours(): string
+    {
+        return this._chatColours;
     }
 
     public get messageLength(): number
