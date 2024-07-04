@@ -1,6 +1,6 @@
 import { AlphaTolerance } from '@nitrots/api';
 import { GetRenderer, TextureUtils } from '@nitrots/utils';
-import { GlRenderTarget, Point, RendererType, Sprite, Texture, TextureSource, WebGPURenderer } from 'pixi.js';
+import { Point, RendererType, Sprite, Texture, TextureSource, WebGPURenderer } from 'pixi.js';
 
 const BYTES_PER_PIXEL = 4;
 
@@ -12,6 +12,7 @@ export class ExtendedSprite extends Sprite
     private _alphaTolerance: number = AlphaTolerance.MATCH_OPAQUE_PIXELS;
     private _varyingDepth: boolean = false;
     private _clickHandling: boolean = false;
+    private _skipMouseHandling: boolean = false;
 
     private _updateId1: number = -1;
     private _updateId2: number = -1;
@@ -43,7 +44,7 @@ export class ExtendedSprite extends Sprite
 
     public containsPoint(point: Point): boolean
     {
-        if(!point || (this.alphaTolerance > 255) || !this.texture || (this.texture === Texture.EMPTY) || (this.blendMode !== 'normal')) return false;
+        if(!point || (this.alphaTolerance > 255) || !this.texture || (this.texture === Texture.EMPTY)) return false;
 
         point = new Point((point.x * this.scale.x), (point.y * this.scale.y));
 
@@ -92,12 +93,12 @@ export class ExtendedSprite extends Sprite
             pixels = TextureUtils.getPixels(new Texture(textureSource))?.pixels ?? null;
         }
 
-        else if(renderer.type === RendererType.WEBGL)
+        else if((renderer.type as RendererType) === RendererType.WEBGL)
         {
             pixels = new Uint8ClampedArray(BYTES_PER_PIXEL * width * height);
 
             const renderTarget = renderer.renderTarget.getRenderTarget(textureSource);
-            const glRenderTarget = renderer.renderTarget.getGpuRenderTarget(renderTarget) as GlRenderTarget;
+            const glRenderTarget = renderer.renderTarget.getGpuRenderTarget(renderTarget);
 
             const gl = renderer.gl;
 
@@ -180,5 +181,15 @@ export class ExtendedSprite extends Sprite
     public set clickHandling(flag: boolean)
     {
         this._clickHandling = flag;
+    }
+
+    public get skipMouseHandling(): boolean
+    {
+        return this._skipMouseHandling;
+    }
+
+    public set skipMouseHandling(flag: boolean)
+    {
+        this._skipMouseHandling = flag;
     }
 }
