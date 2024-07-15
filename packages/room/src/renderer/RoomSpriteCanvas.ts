@@ -234,7 +234,7 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
         }
     }
 
-    public setScale(scale: number, point: Point = null, offsetPoint: Point = null): void
+    public setScale(scale: number, point: Point = null, offsetPoint: Point = null, isFlipForced: boolean = false): void
     {
         if(!this._master || !this._display) return;
 
@@ -266,7 +266,8 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
 
         if((this._display.x !== this._screenOffsetX) || (this._display.y !== this._screenOffsetY))
         {
-            this._display.position.set(this._screenOffsetX, this._screenOffsetY);
+            this._display.x = Math.floor(this._screenOffsetX);
+            this._display.y = Math.floor(this._screenOffsetY);
 
             update = true;
         }
@@ -562,8 +563,8 @@ export class RoomSpriteCanvas implements IRoomRenderingCanvas
             this.updateEnterRoomEffect(extendedSprite, objectSprite);
         }
 
-        if(extendedSprite.x !== sprite.x) extendedSprite.x = sprite.x;
-        if(extendedSprite.y !== sprite.y) extendedSprite.y = sprite.y;
+        extendedSprite.x = Math.round(sprite.x);
+        extendedSprite.y = Math.round(sprite.y);
 
         extendedSprite.offsetX = objectSprite.offsetX;
         extendedSprite.offsetY = objectSprite.offsetY;
