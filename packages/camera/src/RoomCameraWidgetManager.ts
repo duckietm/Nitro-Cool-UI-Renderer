@@ -67,7 +67,6 @@ export class RoomCameraWidgetManager implements IRoomCameraWidgetManager
             }
             else
             {
-                //@ts-ignore
                 const newMatrix: ColorMatrix = [];
                 const otherMatrix: ColorMatrix = [1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0];
 
