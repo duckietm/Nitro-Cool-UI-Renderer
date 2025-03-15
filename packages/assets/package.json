@@ -15,9 +15,9 @@
     "@nitrots/api": "1.0.0",
     "@nitrots/utils": "1.0.0",
 	"@pixi/gif": "^3.0.1",
-    "pixi.js": "^8.5.1"    
+    "pixi.js": "^8.8.1"    
   },
   "devDependencies": {
-    "typescript": "~5.5.4"
+    "typescript": "~5.8.2"
   }
 }

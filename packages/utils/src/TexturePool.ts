@@ -89,9 +89,7 @@ export class TexturePool
 
                         this._textures[texture.width][texture.height].splice(i, 1);
 
-                        this._totalTextures--;
-
-                        NitroLogger.log(`[TexturePool] Texture disposed: ${texture.width}x${texture.height}`);
+                        this._totalTextures--;                        
                     }
                 }
             }
