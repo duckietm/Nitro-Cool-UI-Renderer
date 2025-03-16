@@ -1,13 +1,15 @@
 import { IGraphicAsset } from '@nitrots/api';
 import { TextureUtils } from '@nitrots/utils';
-import { Container, Matrix, Sprite, Texture } from 'pixi.js';
+import * as PIXI from 'pixi.js';
 import { FurnitureAnimatedVisualization } from './FurnitureAnimatedVisualization';
+
+console.log('Pixi.js Version at import:', PIXI.VERSION);
 
 export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualization {
   protected static THUMBNAIL: string = 'THUMBNAIL';
 
   private _thumbnailAssetNameNormal: string;
-  private _thumbnailImageNormal: Texture;
+  private _thumbnailImageNormal: PIXI.Texture;
   private _thumbnailDirection: number;
   private _thumbnailChanged: boolean;
   protected _hasOutline: boolean;
@@ -19,14 +21,14 @@ export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualiza
     this._thumbnailImageNormal = null;
     this._thumbnailDirection = -1;
     this._thumbnailChanged = false;
-    this._hasOutline = false;
+    this._hasOutline = false; // Disable outline for simplicity
   }
 
   public get hasThumbnailImage(): boolean {
     return !!this._thumbnailImageNormal;
   }
 
-  public setThumbnailImages(k: Texture): void {
+  public setThumbnailImages(k: PIXI.Texture): void {
     this._thumbnailImageNormal = k;
     this._thumbnailChanged = true;
   }
@@ -34,13 +36,11 @@ export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualiza
   protected updateModel(scale: number): boolean {
     const flag = super.updateModel(scale);
 
-    // Example: apply color tint for testing.
     if (this.object && this.object.model) {
       if (this.direction === 2) this.object.model.setValue('furniture_color', 0xFF0000);
       else if (this.direction === 4) this.object.model.setValue('furniture_color', 0x0000FF);
     }
 
-    // Only refresh thumbnail if something changed or the direction changed.
     if (!this._thumbnailChanged && (this._thumbnailDirection === this.direction))
       return flag;
 
@@ -62,7 +62,7 @@ export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualiza
     this._thumbnailDirection = this.direction;
   }
 
-  private addThumbnailAsset(k: Texture, scale: number): void {
+  private addThumbnailAsset(k: PIXI.Texture, scale: number): void {
     if (!k) {
       console.warn('addThumbnailAsset called with null/undefined texture. Skipping.');
       return;
@@ -101,76 +101,89 @@ export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualiza
     }
   }
 
-  protected generateTransformedThumbnail(texture: Texture, asset: IGraphicAsset): Texture {
-    // 1) If an outline is needed, generate it.
-    if (this._hasOutline) {
-      const outlineContainer = new Container();
-      const background = new Sprite(Texture.WHITE);
-      background.tint = 0x000000;
-      background.width = texture.width + 40;
-      background.height = texture.height + 40;
+  protected generateTransformedThumbnail(texture: PIXI.Texture, asset: IGraphicAsset): PIXI.Texture {
+  console.log('Entering generateTransformedThumbnail');
+  console.log('Initial texture dimensions:', texture.width, 'x', texture.height);
+  console.log('Asset dimensions:', asset.width, 'x', asset.height);
 
-      const sprite = new Sprite(texture);
-      sprite.x = (background.width - sprite.width) / 2;
-      sprite.y = (background.height - sprite.height) / 2;
-      outlineContainer.addChild(background, sprite);
+  // 1) Scale the texture to 320x320, then to 64x64
+  const targetWidth = 64;
+  const targetHeight = 64;
+  let workingTexture = texture;
 
-      // Generate a new texture that includes the outline.
-      texture = TextureUtils.generateTexture(outlineContainer);
-    }
+  // Ensure texture is 320x320
+  if (texture.width !== 320 || texture.height !== 320) {
+    const scaleContainer = new PIXI.Container();
+    const scaleSprite = new PIXI.Sprite(texture);
+    scaleSprite.width = 320;
+    scaleSprite.height = 320;
+    scaleContainer.addChild(scaleSprite);
+    workingTexture = TextureUtils.generateTexture(scaleContainer, 320, 320);
+    console.log('Scaled texture to 320x320:', workingTexture.width, 'x', workingTexture.height);
+  }
 
-    // 2) Set the texture's intended dimensions.
-    texture.orig.width = asset.width;
-    texture.orig.height = asset.height;
+  // Scale to 64x64
+  const scaleFactor = targetWidth / workingTexture.width; // 64/320 = 0.2
+  const scaledContainer = new PIXI.Container();
+  const scaledSprite = new PIXI.Sprite(workingTexture);
+  scaledSprite.scale.set(scaleFactor, scaleFactor); // Scale to 64x64
+  scaledContainer.addChild(scaledSprite);
+  workingTexture = TextureUtils.generateTexture(scaledContainer, targetWidth, targetHeight);
+  console.log('Scaled texture to 64x64:', workingTexture.width, 'x', workingTexture.height);
 
-    // 3) Build the matrix (same as your original logic).
-    //    Default matrix: (a=1, b=0, c=0, d=1, tx=0, ty=0)
-    const matrix = new Matrix();
+  // 2) Apply trapezoid transformation: (0,0), (64,30), (64,64), (0,34)
+  if (this.direction === 4) {
+    const sprite = new PIXI.Sprite(workingTexture);
+    const container = new PIXI.Container();
+    container.addChild(sprite);
+
+    // Apply the trapezoid transformation
+    const points = [
+      new PIXI.Point(0, 0),
+      new PIXI.Point(64, 30),
+      new PIXI.Point(64, 64),
+      new PIXI.Point(0, 34),
+    ];
+
+    const graphics = new PIXI.Graphics();
+    graphics.beginFill(0xFFFFFF);
+    graphics.drawPolygon(points);
+    graphics.endFill();
+
+    container.addChild(graphics);
+    container.mask = graphics;
+
+    const bounds = container.getBounds();
+    console.log('Container bounds before render:', bounds.width, 'x', bounds.height);
+
+    const finalTexture = TextureUtils.generateTexture(container, targetWidth, targetHeight);
+    console.log('Final texture dimensions:', finalTexture.width, 'x', finalTexture.height);
+    return finalTexture;
+  } else {
+    // Original matrix transformation for cases 0 and 2
+    const matrix = new PIXI.Matrix();
     switch (this.direction) {
-      case 2:
-        matrix.b = -0.5; // negative skew
-        matrix.d /= 1.6; // flatten vertically
-        matrix.ty = 0.5 * texture.width; // shift downward
-        break;
       case 0:
-      case 4:
-        matrix.b = 0.5; // positive skew
+      case 2:
+        matrix.b = 0.5; // Positive skew
         matrix.d /= 1.6;
-        matrix.tx = -0.5; // shift left
+        matrix.tx = -0.5; // Shift left
+        break;
+      default:
         break;
     }
 
-    // 4) Decompose the matrix.
-    const rotation = Math.atan2(matrix.b, matrix.a);
-    const scaleX = Math.sqrt(matrix.a * matrix.a + matrix.b * matrix.b);
-    const scaleY = matrix.d;
-    const tx = matrix.tx;
-    const ty = matrix.ty;
+    const sprite = new PIXI.Sprite(workingTexture);
+    sprite.position.set(matrix.tx, matrix.ty);
+    sprite.scale.set(matrix.a, matrix.d);
+    sprite.skew.set(matrix.b, matrix.c);
 
-    // 5) Create a sprite from the texture.
-    const finalSprite = new Sprite(texture);
-    // Set the anchor to center to ease flipping.
-    finalSprite.anchor.set(0.5, 0.5);
-
-    // 6) Apply the decomposed transform.
-    // Since our anchor is center, add half of the texture's width/height.
-    finalSprite.x = tx + texture.width / 2;
-    finalSprite.y = ty + texture.height / 2;
-    finalSprite.rotation = rotation;
-    finalSprite.scale.set(scaleX, scaleY);
-
-    console.log(
-      'Manual override: direction', this.direction,
-      'rotation =', finalSprite.rotation,
-      'scale =', finalSprite.scale.x, finalSprite.scale.y,
-      'position =', finalSprite.x, finalSprite.y
-    );
-
-    // 8) Wrap the sprite in a container and generate the final texture.
-    const container = new Container();
-    container.addChild(finalSprite);
+    const container = new PIXI.Container();
+    container.addChild(sprite);
     return TextureUtils.generateTexture(container);
   }
+}
+
 
   protected getSpriteAssetName(scale: number, layerId: number): string {
     if (
