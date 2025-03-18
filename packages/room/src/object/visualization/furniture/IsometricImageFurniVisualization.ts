@@ -1,206 +1,154 @@
 import { IGraphicAsset } from '@nitrots/api';
-import { TextureUtils } from '@nitrots/utils';
-import * as PIXI from 'pixi.js';
+import { GetRenderer, TextureUtils } from '@nitrots/utils';
+import { Matrix, Sprite, Texture, RenderTexture } from 'pixi.js';
 import { FurnitureAnimatedVisualization } from './FurnitureAnimatedVisualization';
 
-console.log('Pixi.js Version at import:', PIXI.VERSION);
-
 export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualization {
-  protected static THUMBNAIL: string = 'THUMBNAIL';
+    protected static THUMBNAIL: string = 'THUMBNAIL';
 
-  private _thumbnailAssetNameNormal: string;
-  private _thumbnailImageNormal: PIXI.Texture;
-  private _thumbnailDirection: number;
-  private _thumbnailChanged: boolean;
-  protected _hasOutline: boolean;
+    private _thumbnailAssetNameNormal: string;
+    private _thumbnailImageNormal: Texture;
+    private _thumbnailDirection: number;
+    private _thumbnailChanged: boolean;
+    private _uniqueId: string;
+    private _photoUrl: string; // Store the photo URL or ID
 
-  constructor() {
-    super();
+    constructor() {
+        super();
 
-    this._thumbnailAssetNameNormal = null;
-    this._thumbnailImageNormal = null;
-    this._thumbnailDirection = -1;
-    this._thumbnailChanged = false;
-    this._hasOutline = false; // Disable outline for simplicity
-  }
-
-  public get hasThumbnailImage(): boolean {
-    return !!this._thumbnailImageNormal;
-  }
-
-  public setThumbnailImages(k: PIXI.Texture): void {
-    this._thumbnailImageNormal = k;
-    this._thumbnailChanged = true;
-  }
-
-  protected updateModel(scale: number): boolean {
-    const flag = super.updateModel(scale);
-
-    if (this.object && this.object.model) {
-      if (this.direction === 2) this.object.model.setValue('furniture_color', 0xFF0000);
-      else if (this.direction === 4) this.object.model.setValue('furniture_color', 0x0000FF);
+        this._thumbnailAssetNameNormal = null;
+        this._thumbnailImageNormal = null;
+        this._thumbnailDirection = -1;
+        this._thumbnailChanged = false;
+        this._uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+        this._photoUrl = null;
     }
 
-    if (!this._thumbnailChanged && (this._thumbnailDirection === this.direction))
-      return flag;
-
-    this.refreshThumbnail();
-
-    return true;
-  }
-
-  private refreshThumbnail(): void {
-    if (!this.asset) return;
-
-    if (this._thumbnailImageNormal) {
-      this.addThumbnailAsset(this._thumbnailImageNormal, 64);
-    } else {
-      this.asset.disposeAsset(this.getThumbnailAssetName(64));
+    public get hasThumbnailImage(): boolean {
+        return !(this._thumbnailImageNormal == null);
     }
 
-    this._thumbnailChanged = false;
-    this._thumbnailDirection = this.direction;
-  }
-
-  private addThumbnailAsset(k: PIXI.Texture, scale: number): void {
-    if (!k) {
-      console.warn('addThumbnailAsset called with null/undefined texture. Skipping.');
-      return;
+    public setThumbnailImages(k: Texture, url?: string): void {
+        this._thumbnailImageNormal = k;
+        this._photoUrl = url || null; // Store the URL or ID passed with the texture
+        this._thumbnailChanged = true;
     }
 
-    let layerId = 0;
-    while (layerId < this.totalSprites) {
-      if (
-        this.getLayerTag(scale, this.direction, layerId) ===
-        IsometricImageFurniVisualization.THUMBNAIL
-      ) {
-        const assetName =
-          this.cacheSpriteAssetName(scale, layerId, false) + this.getFrameNumber(scale, layerId);
-        const asset = this.getAsset(assetName, layerId);
+    public getPhotoUrl(): string {
+        return this._photoUrl; // Expose the URL for the click handler
+    }
 
-        if (asset) {
-          const transformed = this.generateTransformedThumbnail(k, asset);
-          if (!transformed) return;
+    protected updateModel(scale: number): boolean {
+        const flag = super.updateModel(scale);
 
-          const thumbAssetName = this.getThumbnailAssetName(scale);
-
-          this.asset.disposeAsset(thumbAssetName);
-          this.asset.addAsset(
-            thumbAssetName,
-            transformed,
-            true,
-            asset.offsetX,
-            asset.offsetY,
-            false,
-            false
-          );
+        if (!this._thumbnailChanged && (this._thumbnailDirection === this.direction)) {
+            return flag;
         }
-        return;
-      }
-      layerId++;
-    }
-  }
 
-  protected generateTransformedThumbnail(texture: PIXI.Texture, asset: IGraphicAsset): PIXI.Texture {
-  console.log('Entering generateTransformedThumbnail');
-  console.log('Initial texture dimensions:', texture.width, 'x', texture.height);
-  console.log('Asset dimensions:', asset.width, 'x', asset.height);
+        this.refreshThumbnail();
 
-  // 1) Scale the texture to 320x320, then to 64x64
-  const targetWidth = 64;
-  const targetHeight = 64;
-  let workingTexture = texture;
-
-  // Ensure texture is 320x320
-  if (texture.width !== 320 || texture.height !== 320) {
-    const scaleContainer = new PIXI.Container();
-    const scaleSprite = new PIXI.Sprite(texture);
-    scaleSprite.width = 320;
-    scaleSprite.height = 320;
-    scaleContainer.addChild(scaleSprite);
-    workingTexture = TextureUtils.generateTexture(scaleContainer, 320, 320);
-    console.log('Scaled texture to 320x320:', workingTexture.width, 'x', workingTexture.height);
-  }
-
-  // Scale to 64x64
-  const scaleFactor = targetWidth / workingTexture.width; // 64/320 = 0.2
-  const scaledContainer = new PIXI.Container();
-  const scaledSprite = new PIXI.Sprite(workingTexture);
-  scaledSprite.scale.set(scaleFactor, scaleFactor); // Scale to 64x64
-  scaledContainer.addChild(scaledSprite);
-  workingTexture = TextureUtils.generateTexture(scaledContainer, targetWidth, targetHeight);
-  console.log('Scaled texture to 64x64:', workingTexture.width, 'x', workingTexture.height);
-
-  // 2) Apply trapezoid transformation: (0,0), (64,30), (64,64), (0,34)
-  if (this.direction === 4) {
-    const sprite = new PIXI.Sprite(workingTexture);
-    const container = new PIXI.Container();
-    container.addChild(sprite);
-
-    // Apply the trapezoid transformation
-    const points = [
-      new PIXI.Point(0, 0),
-      new PIXI.Point(64, 30),
-      new PIXI.Point(64, 64),
-      new PIXI.Point(0, 34),
-    ];
-
-    const graphics = new PIXI.Graphics();
-    graphics.beginFill(0xFFFFFF);
-    graphics.drawPolygon(points);
-    graphics.endFill();
-
-    container.addChild(graphics);
-    container.mask = graphics;
-
-    const bounds = container.getBounds();
-    console.log('Container bounds before render:', bounds.width, 'x', bounds.height);
-
-    const finalTexture = TextureUtils.generateTexture(container, targetWidth, targetHeight);
-    console.log('Final texture dimensions:', finalTexture.width, 'x', finalTexture.height);
-    return finalTexture;
-  } else {
-    // Original matrix transformation for cases 0 and 2
-    const matrix = new PIXI.Matrix();
-    switch (this.direction) {
-      case 0:
-      case 2:
-        matrix.b = 0.5; // Positive skew
-        matrix.d /= 1.6;
-        matrix.tx = -0.5; // Shift left
-        break;
-      default:
-        break;
+        return true;
     }
 
-    const sprite = new PIXI.Sprite(workingTexture);
-    sprite.position.set(matrix.tx, matrix.ty);
-    sprite.scale.set(matrix.a, matrix.d);
-    sprite.skew.set(matrix.b, matrix.c);
+    private refreshThumbnail(): void {
+        if (this.asset == null) {
+            return;
+        }
 
-    const container = new PIXI.Container();
-    container.addChild(sprite);
-    return TextureUtils.generateTexture(container);
-  }
-}
+        const thumbnailAssetName = this.getThumbnailAssetName(64);
 
+        if (this._thumbnailImageNormal) {
+            this.addThumbnailAsset(this._thumbnailImageNormal, 64);
+        } else {
+            const layerId = 2;
+            const sprite = this.getSprite(layerId);
+        }
 
-  protected getSpriteAssetName(scale: number, layerId: number): string {
-    if (
-      this._thumbnailImageNormal &&
-      this.getLayerTag(scale, this.direction, layerId) === IsometricImageFurniVisualization.THUMBNAIL
-    ) {
-      return this.getThumbnailAssetName(scale);
+        this._thumbnailChanged = false;
+        this._thumbnailDirection = this.direction;
     }
-    return super.getSpriteAssetName(scale, layerId);
-  }
 
-  protected getThumbnailAssetName(scale: number): string {
-    this._thumbnailAssetNameNormal = [this._type, this.object.id, 'thumb', 64, this.direction].join('_');
-    return this._thumbnailAssetNameNormal;
-  }
+    private addThumbnailAsset(k: Texture, scale: number): void {
+        let layerId = 0;
 
-  protected getFullThumbnailAssetName(k: number, _arg_2: number): string {
-    return [this._type, k, 'thumb', _arg_2, this.direction].join('_');
-  }
+        while (layerId < this.totalSprites) {
+            const layerTag = this.getLayerTag(scale, this.direction, layerId);
+
+            if (layerTag === IsometricImageFurniVisualization.THUMBNAIL) {
+                const assetName = (this.cacheSpriteAssetName(scale, layerId, false) + this.getFrameNumber(scale, layerId));
+                const asset = this.getAsset(assetName, layerId);
+                const thumbnailAssetName = `${this.getThumbnailAssetName(scale)}-${this._uniqueId}`;
+                const transformedTexture = this.generateTransformedThumbnail(k, asset || { width: 64, height: 64, offsetX: -34, offsetY: -30 });
+
+                this.asset.addAsset(thumbnailAssetName, transformedTexture, true, asset?.offsetX || -34, asset?.offsetY || -30, false, false);
+
+                const sprite = this.getSprite(layerId);
+                if (sprite) {
+                    sprite.texture = transformedTexture;
+                }
+
+                return;
+            }
+
+            layerId++;
+        }
+    }
+
+    protected generateTransformedThumbnail(texture: Texture, asset: IGraphicAsset): Texture {
+        const sprite = new Sprite(texture);
+        const scaleFactor = (asset?.width || 64) / texture.width;
+        const matrix = new Matrix();
+
+        switch (this.direction) {
+            case 2:
+                matrix.a = scaleFactor;
+                matrix.b = (-0.5 * scaleFactor);
+                matrix.c = 0;
+                matrix.d = scaleFactor;
+                matrix.tx = 0;
+                matrix.ty = (0.5 * scaleFactor * texture.width);
+                break;
+            case 0:
+            case 4:
+                matrix.a = scaleFactor;
+                matrix.b = (0.5 * scaleFactor);
+                matrix.c = 0;
+                matrix.d = scaleFactor;
+                matrix.tx = 0;
+                matrix.ty = 0;
+                break;
+            default:
+                matrix.a = scaleFactor;
+                matrix.b = 0;
+                matrix.c = 0;
+                matrix.d = scaleFactor;
+                matrix.tx = 0;
+                matrix.ty = 0;
+        }
+
+        sprite.setFromMatrix(matrix);
+
+        const width = 64;
+        const height = 64;
+        const renderTexture = RenderTexture.create({ width, height, resolution: 1 });
+        GetRenderer().render({ container: sprite, target: renderTexture });
+
+        return renderTexture;
+    }
+
+    protected getSpriteAssetName(scale: number, layerId: number): string {
+        if (this._thumbnailImageNormal && (this.getLayerTag(scale, this.direction, layerId) === IsometricImageFurniVisualization.THUMBNAIL)) {
+            return `${this.getThumbnailAssetName(scale)}-${this._uniqueId}`;
+        }
+
+        return super.getSpriteAssetName(scale, layerId);
+    }
+
+    protected getThumbnailAssetName(scale: number): string {
+        return this.cacheSpriteAssetName(scale, 2, false) + this.getFrameNumber(scale, 2);
+    }
+
+    protected getFullThumbnailAssetName(k: number, _arg_2: number): string {
+        return [this._type, k, 'thumb', _arg_2].join('_');
+    }
 }
