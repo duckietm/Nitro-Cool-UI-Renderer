@@ -1,6 +1,6 @@
 import { IGraphicAsset } from '@nitrots/api';
 import { GetRenderer, TextureUtils } from '@nitrots/utils';
-import { Matrix, Sprite, Texture, RenderTexture } from 'pixi.js';
+import { Matrix, Sprite, Texture, RenderTexture, Graphics } from 'pixi.js';
 import { FurnitureAnimatedVisualization } from './FurnitureAnimatedVisualization';
 
 export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualization {
@@ -11,7 +11,8 @@ export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualiza
     private _thumbnailDirection: number;
     private _thumbnailChanged: boolean;
     private _uniqueId: string;
-    private _photoUrl: string; // Store the photo URL or ID
+    private _photoUrl: string;
+    protected _hasOutline: boolean;
 
     constructor() {
         super();
@@ -22,6 +23,7 @@ export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualiza
         this._thumbnailChanged = false;
         this._uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
         this._photoUrl = null;
+        this._hasOutline = true;
     }
 
     public get hasThumbnailImage(): boolean {
@@ -30,12 +32,13 @@ export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualiza
 
     public setThumbnailImages(k: Texture, url?: string): void {
         this._thumbnailImageNormal = k;
-        this._photoUrl = url || null; // Store the URL or ID passed with the texture
+        this._photoUrl = url || null;
+        console.log("Set thumbnail - texture:", k, "url:", this._photoUrl);
         this._thumbnailChanged = true;
     }
 
     public getPhotoUrl(): string {
-        return this._photoUrl; // Expose the URL for the click handler
+        return this._photoUrl;
     }
 
     protected updateModel(scale: number): boolean {
@@ -130,8 +133,14 @@ export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualiza
 
         const width = 64;
         const height = 64;
+
+        const container = new Sprite();
+
+        sprite.position.set((width - sprite.width) / 2 + 2, (height - sprite.height) / 2 + 2);
+        container.addChild(sprite);
+
         const renderTexture = RenderTexture.create({ width, height, resolution: 1 });
-        GetRenderer().render({ container: sprite, target: renderTexture });
+        GetRenderer().render({ container, target: renderTexture, clear: true });
 
         return renderTexture;
     }
