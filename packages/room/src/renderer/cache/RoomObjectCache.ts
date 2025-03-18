@@ -90,22 +90,12 @@ export class RoomObjectCache
                     data.type = sprite.sprite.type;
                     data.posture = sprite.sprite.posture;
 					
-					console.log("Sprite data before processing:", {
-                    name: data.name,
-                    type: data.type,
-                    tag: sprite.sprite.tag, // Add this line to log the tag
-                    width: data.width,
-                    height: data.height,
-                    frame: data.frame,
-                    color: data.color
-					});
-
                     const isSkewed = this.isSkewedSprite(sprite.sprite);
 
-                    if(isSkewed)
+                    /* if(isSkewed)
                     {
                         data.skew = (((sprite.sprite.direction % 4) === 0) ? -0.5 : 0.5);
-                    }
+                    } */
 					
                     if(((((isSkewed || (sprite.name.indexOf('%image.library.url%') >= 0)) || (sprite.name.indexOf('%group.badge.url%') >= 0)) && (data.width <= RoomObjectCache.MAX_SIZE_FOR_AVG_COLOR)) && (data.height <= RoomObjectCache.MAX_SIZE_FOR_AVG_COLOR)))
                     {
@@ -131,11 +121,6 @@ export class RoomObjectCache
     {
         if(!k.type) return false;
 		
-		console.log("Checking if sprite is skewed:", {
-			type: k.type,
-			tag: k.tag
-		});
-
         if((k.type.indexOf('external_image_wallitem') === 0) && (k.tag === 'THUMBNAIL')) return true;
 
         if((k.type.indexOf('guild_forum') === 0) && (k.tag === 'THUMBNAIL')) return true;
