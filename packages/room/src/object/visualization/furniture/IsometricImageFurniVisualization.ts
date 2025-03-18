@@ -23,7 +23,6 @@ export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualiza
         this._thumbnailChanged = false;
         this._uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
         this._photoUrl = null;
-        this._hasOutline = true;
     }
 
     public get hasThumbnailImage(): boolean {
@@ -33,7 +32,6 @@ export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualiza
     public setThumbnailImages(k: Texture, url?: string): void {
         this._thumbnailImageNormal = k;
         this._photoUrl = url || null;
-        console.log("Set thumbnail - texture:", k, "url:", this._photoUrl);
         this._thumbnailChanged = true;
     }
 
