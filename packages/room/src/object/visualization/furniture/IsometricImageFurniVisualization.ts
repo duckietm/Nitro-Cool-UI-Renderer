@@ -1,6 +1,6 @@
 import { IGraphicAsset } from '@nitrots/api';
 import { GetRenderer, TextureUtils } from '@nitrots/utils';
-import { Matrix, Sprite, Texture, RenderTexture, Graphics } from 'pixi.js';
+import { Matrix, Sprite, Texture, RenderTexture } from 'pixi.js';
 import { FurnitureAnimatedVisualization } from './FurnitureAnimatedVisualization';
 
 export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualization {
@@ -79,13 +79,19 @@ export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualiza
                 const assetName = (this.cacheSpriteAssetName(scale, layerId, false) + this.getFrameNumber(scale, layerId));
                 const asset = this.getAsset(assetName, layerId);
                 const thumbnailAssetName = `${this.getThumbnailAssetName(scale)}-${this._uniqueId}`;
-                const transformedTexture = this.generateTransformedThumbnail(k, asset || { width: 64, height: 64, offsetX: -34, offsetY: -30 });
+                const transformedTexture = this.generateTransformedThumbnail(k, asset || { width: 64, height: 64 });
 
-                this.asset.addAsset(thumbnailAssetName, transformedTexture, true, asset?.offsetX || -34, asset?.offsetY || -30, false, false);
+                // Calculate dynamic offsets based on transformed bounds
+                const sprite = new Sprite(transformedTexture);
+                const bounds = sprite.getLocalBounds();
+                const offsetX = -Math.floor(bounds.width / 2); // Center horizontally
+                const offsetY = -Math.floor(bounds.height / 2); // Center vertically
 
-                const sprite = this.getSprite(layerId);
-                if (sprite) {
-                    sprite.texture = transformedTexture;
+                this.asset.addAsset(thumbnailAssetName, transformedTexture, true, offsetX, offsetY, false, false);
+
+                const placedSprite = this.getSprite(layerId);
+                if (placedSprite) {
+                    placedSprite.texture = transformedTexture;
                 }
 
                 return;
@@ -133,8 +139,7 @@ export class IsometricImageFurniVisualization extends FurnitureAnimatedVisualiza
         const height = 64;
 
         const container = new Sprite();
-
-        sprite.position.set((width - sprite.width) / 2 + 2, (height - sprite.height) / 2 + 2);
+        sprite.position.set((width - sprite.width) / 2, (height - sprite.height) / 2);
         container.addChild(sprite);
 
         const renderTexture = RenderTexture.create({ width, height, resolution: 1 });
