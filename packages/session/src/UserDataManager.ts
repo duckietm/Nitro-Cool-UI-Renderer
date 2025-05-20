@@ -144,6 +144,17 @@ export class UserDataManager implements IUserDataManager
 
         userData.custom = custom;
     }
+	
+	public updateBackground(roomIndex: number, background: number, stand: number, overlay: number): void
+    {
+        const userData = this.getUserDataByIndex(roomIndex);
+
+        if(!userData) return;
+
+        userData.background = background;
+        userData.stand = stand;
+        userData.overlay = overlay;
+    }
 
     public updateAchievementScore(roomIndex: number, score: number): void
     {

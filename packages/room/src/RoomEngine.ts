@@ -1808,6 +1808,27 @@ export class RoomEngine implements IRoomEngine, IRoomCreator, IRoomEngineService
 
         return true;
     }
+	
+	public getFurniLocation(roomId: number, objectId: number, isWallItem: boolean): string
+    {
+        return isWallItem
+            ? this.getRoomObjectWall(roomId, objectId).getLocation().toString()
+            : this.getRoomObjectFloor(roomId, objectId).getLocation().toString();
+    }
+
+    public getFurniDirection(roomId: number, objectId: number, isWallItem: boolean): string
+    {
+        return isWallItem
+            ? this.getRoomObjectWall(roomId, objectId).getDirection().toString()
+            : this.getRoomObjectFloor(roomId, objectId).getDirection().toString();
+    }
+
+    public getFurniState(roomId: number, objectId: number, isWallItem: boolean): number
+    {
+        return isWallItem
+            ? this.getRoomObjectWall(roomId, objectId).getState()
+            : this.getRoomObjectFloor(roomId, objectId).getState();
+    }
 
     public addRoomObjectUser(roomId: number, objectId: number, location: IVector3D, direction: IVector3D, headDirection: number, type: number, figure: string): boolean
     {
