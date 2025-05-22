@@ -55,6 +55,9 @@ export class RoomUsersHandler extends BaseHandler
 
                 userData.name = user.name;
                 userData.custom = user.custom;
+				userData.background = user.background;
+                userData.stand = user.stand;
+                userData.overlay = user.overlay;									  
                 userData.activityPoints = user.activityPoints;
                 userData.figure = user.figure;
                 userData.type = user.userType;

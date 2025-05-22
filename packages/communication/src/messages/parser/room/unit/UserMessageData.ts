@@ -16,7 +16,7 @@ export class UserMessageData
     private _activityPoints: number = 0;
 	private _background: number = 0;
     private _stand: number = 0;
-    private _overlay: number = 0
+    private _overlay: number = 0;
     private _webID: number = 0;
     private _groupID: number = 0;
     private _groupStatus: number = 0;

@@ -303,7 +303,7 @@ export class AvatarVisualization extends RoomObjectSpriteVisualization implement
                     sprite.offsetX = ((((-1 * scale) / 2) + _local_20[0]) - ((sprite.texture.width - scale) / 2));
                     sprite.offsetY = (((-(sprite.texture.height) + (scale / 4)) + _local_20[1]) + this._postureOffset);
                 }
-
+					
                 if(this._isLaying)
                 {
                     if(this._layInside) sprite.relativeDepth = -0.5;

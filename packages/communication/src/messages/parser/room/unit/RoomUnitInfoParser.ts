@@ -34,6 +34,9 @@ export class RoomUnitInfoParser implements IMessageParser
         this._gender = wrapper.readString().toLocaleUpperCase();
         this._motto = wrapper.readString();
         this._achievementScore = wrapper.readInt();
+		this._backgroundId = wrapper.readInt();
+        this._standId = wrapper.readInt();
+        this._overlayId = wrapper.readInt();									   
 
         return true;
     }
