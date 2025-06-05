@@ -19,16 +19,17 @@ export class PetBreedingMessageParser implements IMessageParser
         return true;
     }
 
-    public parse(wrapper: IMessageDataWrapper): boolean
-    {
-        if(!wrapper) return false;
+    public parse(wrapper: IMessageDataWrapper): boolean {
+		if (!wrapper || wrapper.bytesAvailable < 12) {
+			return false;
+		}
 
-        this._state = wrapper.readInt();
-        this._ownPetId = wrapper.readInt();
-        this._otherPetId = wrapper.readInt();
+		this._state = wrapper.readInt();
+		this._ownPetId = wrapper.readInt();
+		this._otherPetId = wrapper.readInt();
 
-        return true;
-    }
+		return true;
+	}
 
     public get state(): number
     {
